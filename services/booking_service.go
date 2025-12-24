@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateBooking(booking models.Booking) error {
+func CreateBooking(booking *models.Booking) error {
 	if booking.CustomerID == 0 || booking.EventID == 0 || booking.Quantity <= 0 {
 		return errors.New("all fields are required")
 	}
@@ -20,10 +20,11 @@ func CreateBooking(booking models.Booking) error {
 	if err != nil {
 		return err
 	}
+	
+	// Simplified defer - just rollback if needed
 	defer func() {
-		if p := recover(); p != nil {
+		if err != nil {
 			tx.Rollback()
-			panic(p)
 		}
 	}()
 
@@ -32,12 +33,17 @@ func CreateBooking(booking models.Booking) error {
 	row := tx.QueryRow(`SELECT id_event, available_seat, price, status FROM event WHERE id_event=? FOR UPDATE`, booking.EventID)
 	err = row.Scan(&event.ID, &event.AvailableSeat, &event.Price, &event.Status)
 	if err != nil {
-		tx.Rollback()
-		return errors.New("event not found")
+		if err == sql.ErrNoRows {
+			return errors.New("event not found")
+		}
+		return err
 	}
 
-	if event.Status != "available" || event.AvailableSeat < booking.Quantity {
-		tx.Rollback()
+	if event.Status != "available" {
+		return errors.New("event is not available")
+	}
+
+	if event.AvailableSeat < booking.Quantity {
 		return errors.New("not enough seats available")
 	}
 
@@ -49,7 +55,6 @@ func CreateBooking(booking models.Booking) error {
 	}
 	_, err = tx.Exec(`UPDATE event SET available_seat=?, status=? WHERE id_event=?`, newAvailable, newStatus, event.ID)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
@@ -61,12 +66,14 @@ func CreateBooking(booking models.Booking) error {
 	                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		booking.CustomerID, booking.EventID, booking.Quantity, booking.TotalPrice, "pending", time.Now(), time.Now())
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
 	bookingID, _ := res.LastInsertId()
 	booking.ID = int(bookingID)
+	booking.Status = "pending"
+	booking.CreatedAt = time.Now()
+	booking.UpdatedAt = time.Now()
 
 	// Generate tickets
 	for i := 0; i < booking.Quantity; i++ {
@@ -83,22 +90,27 @@ func CreateBooking(booking models.Booking) error {
                        VALUES (?, ?, ?, ?, ?, ?)`,
 			bookingID, holder, ticketCode, "unused", time.Now(), time.Now())
 		if err != nil {
-			// Jika error, update booking jadi failed sebelum rollback
+			// Update booking status to failed before rollback
 			tx.Exec("UPDATE booking SET status='failed', updated_at=? WHERE id_booking=?", time.Now(), booking.ID)
-			tx.Rollback()
-			return err
+			return fmt.Errorf("failed to create ticket: %v", err)
 		}
 	}
 
 	// Update status booking jadi success sebelum commit
 	_, err = tx.Exec("UPDATE booking SET status='success', updated_at=? WHERE id_booking=?", time.Now(), booking.ID)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
+	booking.Status = "success"
+
 	// Commit transaction
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetBookingByID ambil booking + tiket

@@ -15,17 +15,25 @@ import (
 func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if err := services.CreateUser(user); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+	if err := services.CreateUser(&user); err != nil {
+		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	user.Password = ""
-	utils.WriteJSON(w, http.StatusCreated, user)
+	// Don't return password in response
+	response := map[string]interface{}{
+		"id":         user.ID,
+		"name":       user.Name,
+		"email":      user.Email,
+		"role":       user.Role,
+		"created_at": user.CreatedAt,
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, response)
 }
 
 // GetUserHandler ambil user berdasarkan ID
@@ -34,18 +42,26 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
 	user, err := services.GetUserByID(id)
 	if err != nil {
-		utils.WriteJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
 		return
 	}
 
-	user.Password = ""
-	utils.WriteJSON(w, http.StatusOK, user)
+	// Don't return password
+	response := map[string]interface{}{
+		"id":         user.ID,
+		"name":       user.Name,
+		"email":      user.Email,
+		"role":       user.Role,
+		"created_at": user.CreatedAt,
+	}
+
+	utils.WriteJSON(w, http.StatusOK, response)
 }
 
 // UpdateUserHandler update user
@@ -54,23 +70,32 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
 	var updated models.User
 	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if err := services.UpdateUser(id, updated); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	updated.Password = ""
-	utils.WriteJSON(w, http.StatusOK, updated)
+	// Get updated user data
+	user, _ := services.GetUserByID(id)
+	response := map[string]interface{}{
+		"id":         user.ID,
+		"name":       user.Name,
+		"email":      user.Email,
+		"role":       user.Role,
+		"created_at": user.CreatedAt,
+	}
+
+	utils.WriteJSON(w, http.StatusOK, response)
 }
 
 // DeleteUserHandler hapus user
@@ -79,14 +104,14 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
 	if err := services.DeleteUser(id); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "user deleted successfully"})
 }
