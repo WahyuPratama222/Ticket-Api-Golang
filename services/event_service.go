@@ -60,7 +60,7 @@ func UpdateEvent(id int, updated models.Event, userRole string) error {
 	event.Title = updated.Title
 	event.Location = updated.Location
 	event.Capacity = updated.Capacity
-	event.AvailableSeat = updated.Capacity // reset available seat
+	event.AvailableSeat = updated.AvailableSeat
 	event.Price = updated.Price
 	event.Status = updated.Status
 	event.Date = updated.Date
