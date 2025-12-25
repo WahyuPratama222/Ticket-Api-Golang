@@ -37,6 +37,28 @@ func (r *UserRepository) Create(user *models.User) error {
 	return nil
 }
 
+// FindAll retrieves all users
+func (r *UserRepository) FindAll() ([]models.User, error) {
+	query := `SELECT id_user, name, email, role, created_at FROM user ORDER BY id_user ASC`
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []models.User{}
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 // FindByID retrieves a user by ID
 func (r *UserRepository) FindByID(id int) (models.User, error) {
 	var user models.User
@@ -64,8 +86,8 @@ func (r *UserRepository) GetPasswordByID(id int) (string, error) {
 
 // Update updates user information
 func (r *UserRepository) Update(id int, user *models.User) error {
-	query := `UPDATE user SET name = ?, email = ?, password = ?, role = ? WHERE id_user = ?`
-	_, err := db.DB.Exec(query, user.Name, user.Email, user.Password, user.Role, id)
+	query := `UPDATE user SET name = ?, email = ?, password = ? WHERE id_user = ?`
+	_, err := db.DB.Exec(query, user.Name, user.Email, user.Password, id)
 	if err != nil {
 		if driverErr, ok := err.(*mysql.MySQLError); ok && driverErr.Number == 1062 {
 			return errors.New("email already exists")

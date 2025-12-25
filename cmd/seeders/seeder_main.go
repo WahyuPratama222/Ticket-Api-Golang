@@ -8,12 +8,12 @@ import (
 )
 
 func main() {
-	// 1. Connect ke DB
+	// Connect to database
 	if err := db.Connect(); err != nil {
 		log.Fatal(err)
 	}
 
-	// 2. Jalankan seeder
+	// Run All Seeders
 	if err := seeders.RunAllSeeder(); err != nil {
 		log.Fatal(err)
 	}

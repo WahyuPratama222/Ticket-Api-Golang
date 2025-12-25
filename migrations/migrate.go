@@ -1,8 +1,6 @@
 package migrations
 
-import (
-	"fmt"
-)
+import "fmt"
 
 func MigrateAll() error {
 	if err := CreateUserTable(); err != nil {

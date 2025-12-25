@@ -45,7 +45,30 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, event)
+	response := map[string]any{
+		"id":             event.ID,
+		"organizer_id":   event.OrganizerID,
+		"title":          event.Title,
+		"location":       event.Location,
+		"capacity":       event.Capacity,
+		"available_seat": event.AvailableSeat,
+		"price":          event.Price,
+		"status":         event.Status,
+		"date":           event.Date,
+	}
+
+	utils.WriteSuccessJSON(w, http.StatusCreated, "event created successfully", response)
+}
+
+// GetAllEvents retrieves all events
+func (h *EventHandler) GetAllEvents(w http.ResponseWriter, r *http.Request) {
+	events, err := h.service.GetAllEvents()
+	if err != nil {
+		utils.WriteErrorJSON(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.WriteSuccessJSON(w, http.StatusOK, "events retrieved successfully", events)
 }
 
 // GetEvent retrieves an event by ID
@@ -64,10 +87,10 @@ func (h *EventHandler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, event)
+	utils.WriteSuccessJSON(w, http.StatusOK, "event retrieved successfully", event)
 }
 
-// UpdateEvent updates event information
+// UpdateEvent updates event information (without organizer_id)
 func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -82,6 +105,9 @@ func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+
+	// Remove organizer_id from update (should not be changed)
+	updated.OrganizerID = 0
 
 	if err := h.service.UpdateEvent(id, updated); err != nil {
 		// Check specific error messages for appropriate status codes
@@ -103,7 +129,7 @@ func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 
 	// Get updated event
 	event, _ := h.service.GetEventByID(id)
-	utils.WriteJSON(w, http.StatusOK, event)
+	utils.WriteSuccessJSON(w, http.StatusOK, "event updated successfully", event)
 }
 
 // DeleteEvent removes an event
@@ -134,5 +160,5 @@ func (h *EventHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "event deleted successfully"})
+	utils.WriteSuccessJSON(w, http.StatusOK, "event deleted successfully", nil)
 }

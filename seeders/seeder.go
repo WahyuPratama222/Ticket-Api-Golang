@@ -2,7 +2,6 @@ package seeders
 
 import "fmt"
 
-// RunAllSeeder mengeksekusi semua seeder (user & event)
 func RunAllSeeder() error {
 	if err := SeedUsers(); err != nil {
 		return fmt.Errorf("failed to seed users: %v", err)
