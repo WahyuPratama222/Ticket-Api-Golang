@@ -43,18 +43,26 @@ func (s *UserService) CreateUser(user *models.User) error {
 	return s.repo.Create(user)
 }
 
+// GetAllUsers retrieves all users
+func (s *UserService) GetAllUsers() ([]models.User, error) {
+	return s.repo.FindAll()
+}
+
 // GetUserByID retrieves user by ID
 func (s *UserService) GetUserByID(id int) (models.User, error) {
 	return s.repo.FindByID(id)
 }
 
-// UpdateUser updates user information
+// UpdateUser updates user information (without role)
 func (s *UserService) UpdateUser(id int, updated models.User) error {
 	// Get existing user
 	existingUser, err := s.repo.FindByID(id)
 	if err != nil {
 		return err
 	}
+
+	// Preserve existing role (role cannot be updated)
+	updated.Role = existingUser.Role
 
 	// Validate update data
 	if err := s.validator.ValidateUpdate(&updated, &existingUser); err != nil {

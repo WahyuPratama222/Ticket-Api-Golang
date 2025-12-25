@@ -133,13 +133,17 @@ func (s *BookingService) generateTickets(tx *sql.Tx, booking *models.Booking) er
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		}
-
 		if err := s.repo.CreateTicket(tx, &ticket); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// GetAllBookings retrieves all bookings
+func (s *BookingService) GetAllBookings() ([]models.Booking, error) {
+	return s.repo.FindAll()
 }
 
 // GetBookingByID retrieves booking with tickets
@@ -149,7 +153,6 @@ func (s *BookingService) GetBookingByID(id int) (models.Booking, []models.Ticket
 	if err != nil {
 		return booking, nil, err
 	}
-
 	// Get tickets
 	tickets, err := s.repo.FindTicketsByBookingID(id)
 	if err != nil {

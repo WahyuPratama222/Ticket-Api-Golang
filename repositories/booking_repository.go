@@ -99,6 +99,39 @@ func (r *BookingRepository) CreateTicket(tx *sql.Tx, ticket *models.Ticket) erro
 	return err
 }
 
+// FindAll retrieves all bookings
+func (r *BookingRepository) FindAll() ([]models.Booking, error) {
+	query := `SELECT id_booking, customer_id, event_id, quantity, total_price, status, created_at, updated_at 
+	          FROM booking ORDER BY id_booking ASC`
+	
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	bookings := []models.Booking{}
+	for rows.Next() {
+		var booking models.Booking
+		err := rows.Scan(
+			&booking.ID, 
+			&booking.CustomerID, 
+			&booking.EventID, 
+			&booking.Quantity, 
+			&booking.TotalPrice,
+			&booking.Status, 
+			&booking.CreatedAt, 
+			&booking.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		bookings = append(bookings, booking)
+	}
+
+	return bookings, nil
+}
+
 // FindByID retrieves a booking by ID
 func (r *BookingRepository) FindByID(id int) (models.Booking, error) {
 	var booking models.Booking

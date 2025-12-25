@@ -47,12 +47,17 @@ func (s *EventService) CreateEvent(event *models.Event) error {
 	return s.repo.Create(event)
 }
 
+// GetAllEvents retrieves all events
+func (s *EventService) GetAllEvents() ([]models.Event, error) {
+	return s.repo.FindAll()
+}
+
 // GetEventByID retrieves event by ID
 func (s *EventService) GetEventByID(id int) (models.Event, error) {
 	return s.repo.FindByID(id)
 }
 
-// UpdateEvent updates event information
+// UpdateEvent updates event information (without organizer_id)
 func (s *EventService) UpdateEvent(id int, updated models.Event) error {
 	// Get existing event
 	existing, err := s.repo.FindByID(id)
@@ -75,7 +80,7 @@ func (s *EventService) UpdateEvent(id int, updated models.Event) error {
 		return err
 	}
 
-	// Preserve existing organizer_id
+	// Preserve existing organizer_id (cannot be changed)
 	updated.OrganizerID = existing.OrganizerID
 
 	// Handle capacity update
@@ -147,3 +152,4 @@ func (s *EventService) DeleteEvent(id int) error {
 	// Delete event
 	return s.repo.Delete(id)
 }
+

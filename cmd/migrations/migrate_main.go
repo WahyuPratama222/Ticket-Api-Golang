@@ -8,12 +8,12 @@ import (
 )
 
 func main() {
-	// Connect ke database (DB sudah ada)
+	// Connect to database
 	if err := db.Connect(); err != nil {
 		log.Fatal(err)
 	}
 
-	// Jalankan semua migration (buat tabel)
+	// Run all migrations
 	if err := migrations.MigrateAll(); err != nil {
 		log.Fatal(err)
 	}

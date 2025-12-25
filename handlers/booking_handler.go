@@ -36,16 +36,29 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]interface{}{
-		"message":     "booking created successfully",
-		"booking_id":  booking.ID,
+	response := map[string]any{
+		"id":          booking.ID,
+		"customer_id": booking.CustomerID,
+		"event_id":    booking.EventID,
 		"quantity":    booking.Quantity,
-		"status":      booking.Status,
 		"total_price": booking.TotalPrice,
+		"status":      booking.Status,
 		"created_at":  booking.CreatedAt,
+		"updated_at":  booking.UpdatedAt,
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, response)
+	utils.WriteSuccessJSON(w, http.StatusCreated, "booking created successfully", response)
+}
+
+// GetAllBookings retrieves all bookings
+func (h *BookingHandler) GetAllBookings(w http.ResponseWriter, r *http.Request) {
+	bookings, err := h.service.GetAllBookings()
+	if err != nil {
+		utils.WriteErrorJSON(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.WriteSuccessJSON(w, http.StatusOK, "bookings retrieved successfully", bookings)
 }
 
 // GetBooking retrieves booking details with tickets
@@ -64,10 +77,10 @@ func (h *BookingHandler) GetBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"booking": booking,
 		"tickets": tickets,
 	}
 
-	utils.WriteJSON(w, http.StatusOK, response)
+	utils.WriteSuccessJSON(w, http.StatusOK, "booking retrieved successfully", response)
 }

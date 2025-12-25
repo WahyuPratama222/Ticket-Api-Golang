@@ -36,6 +36,31 @@ func (r *EventRepository) Create(event *models.Event) error {
 	return nil
 }
 
+// FindAll retrieves all events
+func (r *EventRepository) FindAll() ([]models.Event, error) {
+	query := `SELECT id_event, organizer_id, title, location, capacity, available_seat, price, status, date 
+	          FROM event ORDER BY id_event ASC`
+	
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	events := []models.Event{}
+	for rows.Next() {
+		var event models.Event
+		err := rows.Scan(&event.ID, &event.OrganizerID, &event.Title, &event.Location, 
+			&event.Capacity, &event.AvailableSeat, &event.Price, &event.Status, &event.Date)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
 // FindByID retrieves an event by ID
 func (r *EventRepository) FindByID(id int) (models.Event, error) {
 	var event models.Event
