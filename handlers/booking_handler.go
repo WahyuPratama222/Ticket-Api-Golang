@@ -6,37 +6,50 @@ import (
 	"strconv"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
-	services "github.com/WahyuPratama222/Ticket-Api-Golang/services"
+	"github.com/WahyuPratama222/Ticket-Api-Golang/services"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/utils"
 	"github.com/gorilla/mux"
 )
 
-// CreateBookingHandler membuat booking baru
-func CreateBookingHandler(w http.ResponseWriter, r *http.Request) {
+// BookingHandler handles HTTP requests for booking operations
+type BookingHandler struct {
+	service *service.BookingService
+}
+
+// NewBookingHandler creates a new booking handler
+func NewBookingHandler() *BookingHandler {
+	return &BookingHandler{
+		service: service.NewBookingService(),
+	}
+}
+
+// CreateBooking handles booking creation
+func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	var booking models.Booking
 	if err := json.NewDecoder(r.Body).Decode(&booking); err != nil {
 		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if err := services.CreateBooking(&booking); err != nil {
+	if err := h.service.CreateBooking(&booking); err != nil {
 		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":    "booking created successfully",
-		"booking_id": booking.ID,
-		"status":     booking.Status,
+		"message":     "booking created successfully",
+		"booking_id":  booking.ID,
+		"quantity":    booking.Quantity,
+		"status":      booking.Status,
 		"total_price": booking.TotalPrice,
-		"created_at": booking.CreatedAt,
+		"created_at":  booking.CreatedAt,
 	}
 
 	utils.WriteJSON(w, http.StatusCreated, response)
 }
 
-// GetBookingHandler ambil detail booking + tiket
-func GetBookingHandler(w http.ResponseWriter, r *http.Request) {
+// GetBooking retrieves booking details with tickets
+func (h *BookingHandler) GetBooking(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -45,16 +58,16 @@ func GetBookingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	booking, tickets, err := services.GetBookingByID(id)
+	booking, tickets, err := h.service.GetBookingByID(id)
 	if err != nil {
 		utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
 		return
 	}
 
-	resp := map[string]interface{}{
+	response := map[string]interface{}{
 		"booking": booking,
 		"tickets": tickets,
 	}
 
-	utils.WriteJSON(w, http.StatusOK, resp)
+	utils.WriteJSON(w, http.StatusOK, response)
 }

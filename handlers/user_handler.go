@@ -6,20 +6,32 @@ import (
 	"strconv"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
-	services "github.com/WahyuPratama222/Ticket-Api-Golang/services"
+	"github.com/WahyuPratama222/Ticket-Api-Golang/services"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/utils"
 	"github.com/gorilla/mux"
 )
 
-// RegisterUserHandler buat user baru
-func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
+// UserHandler handles HTTP requests for user operations
+type UserHandler struct {
+	service *service.UserService
+}
+
+// NewUserHandler creates a new user handler
+func NewUserHandler() *UserHandler {
+	return &UserHandler{
+		service: service.NewUserService(),
+	}
+}
+
+// RegisterUser handles user registration
+func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if err := services.CreateUser(&user); err != nil {
+	if err := h.service.CreateUser(&user); err != nil {
 		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -36,8 +48,8 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusCreated, response)
 }
 
-// GetUserHandler ambil user berdasarkan ID
-func GetUserHandler(w http.ResponseWriter, r *http.Request) {
+// GetUser retrieves a user by ID
+func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -46,7 +58,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := services.GetUserByID(id)
+	user, err := h.service.GetUserByID(id)
 	if err != nil {
 		utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
 		return
@@ -64,8 +76,8 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, response)
 }
 
-// UpdateUserHandler update user
-func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+// UpdateUser updates user information
+func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -80,13 +92,13 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := services.UpdateUser(id, updated); err != nil {
+	if err := h.service.UpdateUser(id, updated); err != nil {
 		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Get updated user data
-	user, _ := services.GetUserByID(id)
+	user, _ := h.service.GetUserByID(id)
 	response := map[string]interface{}{
 		"id":         user.ID,
 		"name":       user.Name,
@@ -98,8 +110,8 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, response)
 }
 
-// DeleteUserHandler hapus user
-func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+// DeleteUser removes a user
+func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -108,7 +120,7 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := services.DeleteUser(id); err != nil {
+	if err := h.service.DeleteUser(id); err != nil {
 		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}

@@ -6,26 +6,38 @@ import (
 	"strconv"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
-	services "github.com/WahyuPratama222/Ticket-Api-Golang/services"
+	"github.com/WahyuPratama222/Ticket-Api-Golang/services"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/utils"
 	"github.com/gorilla/mux"
 )
 
-// CreateEventHandler buat event baru
-func CreateEventHandler(w http.ResponseWriter, r *http.Request) {
+// EventHandler handles HTTP requests for event operations
+type EventHandler struct {
+	service *service.EventService
+}
+
+// NewEventHandler creates a new event handler
+func NewEventHandler() *EventHandler {
+	return &EventHandler{
+		service: service.NewEventService(),
+	}
+}
+
+// CreateEvent handles event creation
+func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	var event models.Event
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
 		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if err := services.CreateEvent(&event); err != nil {
+	if err := h.service.CreateEvent(&event); err != nil {
 		// Check specific error messages for appropriate status codes
 		if err.Error() == "organizer not found" {
 			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
 			return
 		}
-		if err.Error() == "only users with organizer role can create events" {
+		if err.Error() == "only users with organizer role can manage events" {
 			utils.WriteErrorJSON(w, http.StatusForbidden, err.Error())
 			return
 		}
@@ -36,8 +48,8 @@ func CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusCreated, event)
 }
 
-// GetEventHandler ambil event berdasarkan ID
-func GetEventHandler(w http.ResponseWriter, r *http.Request) {
+// GetEvent retrieves an event by ID
+func (h *EventHandler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -46,7 +58,7 @@ func GetEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := services.GetEventByID(id)
+	event, err := h.service.GetEventByID(id)
 	if err != nil {
 		utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
 		return
@@ -55,8 +67,8 @@ func GetEventHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, event)
 }
 
-// UpdateEventHandler update event
-func UpdateEventHandler(w http.ResponseWriter, r *http.Request) {
+// UpdateEvent updates event information
+func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -71,7 +83,7 @@ func UpdateEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := services.UpdateEvent(id, updated); err != nil {
+	if err := h.service.UpdateEvent(id, updated); err != nil {
 		// Check specific error messages for appropriate status codes
 		if err.Error() == "event not found" {
 			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
@@ -81,7 +93,7 @@ func UpdateEventHandler(w http.ResponseWriter, r *http.Request) {
 			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
 			return
 		}
-		if err.Error() == "only users with organizer role can update events" {
+		if err.Error() == "only users with organizer role can manage events" {
 			utils.WriteErrorJSON(w, http.StatusForbidden, err.Error())
 			return
 		}
@@ -90,12 +102,12 @@ func UpdateEventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get updated event
-	event, _ := services.GetEventByID(id)
+	event, _ := h.service.GetEventByID(id)
 	utils.WriteJSON(w, http.StatusOK, event)
 }
 
-// DeleteEventHandler hapus event
-func DeleteEventHandler(w http.ResponseWriter, r *http.Request) {
+// DeleteEvent removes an event
+func (h *EventHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -104,7 +116,7 @@ func DeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := services.DeleteEvent(id); err != nil {
+	if err := h.service.DeleteEvent(id); err != nil {
 		// Check specific error messages for appropriate status codes
 		if err.Error() == "event not found" {
 			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
@@ -114,7 +126,7 @@ func DeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
 			return
 		}
-		if err.Error() == "only users with organizer role can delete events" {
+		if err.Error() == "only users with organizer role can manage events" {
 			utils.WriteErrorJSON(w, http.StatusForbidden, err.Error())
 			return
 		}
