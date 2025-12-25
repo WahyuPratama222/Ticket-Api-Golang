@@ -10,46 +10,29 @@ import (
 	"syscall"
 	"time"
 
-	handler "github.com/WahyuPratama222/Ticket-Api-Golang/handlers"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/pkg/db"
-	"github.com/gorilla/mux"
 )
 
 func main() {
-	// Connect ke DB
+	// Connect to database
 	if err := db.Connect(); err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	r := mux.NewRouter()
+	// Setup routes
+	router := SetupRoutes()
 
-	// User routes
-	r.HandleFunc("/users/register", handler.RegisterUserHandler).Methods("POST")
-	r.HandleFunc("/users/{id}", handler.GetUserHandler).Methods("GET")
-	r.HandleFunc("/users/{id}", handler.UpdateUserHandler).Methods("PUT")
-	r.HandleFunc("/users/{id}", handler.DeleteUserHandler).Methods("DELETE")
-
-	// Event routes
-	r.HandleFunc("/events", handler.CreateEventHandler).Methods("POST")
-	r.HandleFunc("/events/{id}", handler.GetEventHandler).Methods("GET")
-	r.HandleFunc("/events/{id}", handler.UpdateEventHandler).Methods("PUT")
-	r.HandleFunc("/events/{id}", handler.DeleteEventHandler).Methods("DELETE")
-
-	// Booking routes
-	r.HandleFunc("/bookings", handler.CreateBookingHandler).Methods("POST")
-	r.HandleFunc("/bookings/{id}", handler.GetBookingHandler).Methods("GET")
-
-	// Get port from environment or use default
+	// Get port from environment
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// Create server with timeouts
+	// Create server
 	srv := &http.Server{
 		Addr:         ":" + port,
-		Handler:      r,
+		Handler:      router,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
