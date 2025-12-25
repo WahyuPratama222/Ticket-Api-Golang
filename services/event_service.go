@@ -1,165 +1,141 @@
 package service
 
 import (
-	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
-	"github.com/WahyuPratama222/Ticket-Api-Golang/pkg/db"
+	"github.com/WahyuPratama222/Ticket-Api-Golang/repositories"
+	"github.com/WahyuPratama222/Ticket-Api-Golang/validations"
 )
 
-// CreateEvent hanya bisa dipanggil oleh user role organizer
-func CreateEvent(event *models.Event) error {
-	if event.OrganizerID == 0 || event.Title == "" || event.Location == "" || event.Capacity <= 0 || event.Price < 0 {
-		return errors.New("all fields are required and must be valid")
-	}
+// EventService handles event business logic
+type EventService struct {
+	repo      *repositories.EventRepository
+	validator *validations.EventValidator
+}
 
-	if event.Date.IsZero() || event.Date.Before(time.Now()) {
-		return errors.New("event date must be in the future")
+// NewEventService creates a new event service
+func NewEventService() *EventService {
+	return &EventService{
+		repo:      repositories.NewEventRepository(),
+		validator: validations.NewEventValidator(),
+	}
+}
+
+// CreateEvent creates a new event
+func (s *EventService) CreateEvent(event *models.Event) error {
+	// Validate input
+	if err := s.validator.ValidateCreate(event); err != nil {
+		return err
 	}
 
 	// Check if organizer exists and has organizer role
-	var role string
-	err := db.DB.QueryRow(`SELECT role FROM user WHERE id_user = ?`, event.OrganizerID).Scan(&role)
+	role, err := s.repo.GetOrganizerRole(event.OrganizerID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return errors.New("organizer not found")
-		}
 		return err
 	}
 
-	if role != "organizer" {
-		return errors.New("only users with organizer role can create events")
+	if err := s.validator.ValidateOrganizerRole(role); err != nil {
+		return err
 	}
 
+	// Set initial values
 	event.AvailableSeat = event.Capacity
 	event.Status = "available"
-	query := `INSERT INTO event (organizer_id, title, location, capacity, available_seat, price, status, date) 
-	          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
-	result, err := db.DB.Exec(query, event.OrganizerID, event.Title, event.Location, event.Capacity, event.AvailableSeat, event.Price, event.Status, event.Date)
-	if err != nil {
-		return err
-	}
-
-	// Get the last inserted ID
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-	event.ID = int(id)
-
-	return nil
+	// Save to database
+	return s.repo.Create(event)
 }
 
-// GetEventByID
-func GetEventByID(id int) (models.Event, error) {
-	var event models.Event
-	query := `SELECT id_event, organizer_id, title, location, capacity, available_seat, price, status, date FROM event WHERE id_event = ?`
-	row := db.DB.QueryRow(query, id)
-	err := row.Scan(&event.ID, &event.OrganizerID, &event.Title, &event.Location, &event.Capacity, &event.AvailableSeat, &event.Price, &event.Status, &event.Date)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return event, errors.New("event not found")
-		}
-		return event, err
-	}
-	return event, nil
+// GetEventByID retrieves event by ID
+func (s *EventService) GetEventByID(id int) (models.Event, error) {
+	return s.repo.FindByID(id)
 }
 
-// UpdateEvent
-func UpdateEvent(id int, updated models.Event) error {
-	if updated.Title == "" || updated.Location == "" || updated.Price < 0 {
-		return errors.New("title, location, and price are required")
-	}
-
-	if !updated.Date.IsZero() && updated.Date.Before(time.Now()) {
-		return errors.New("event date must be in the future")
-	}
-
-	event, err := GetEventByID(id)
+// UpdateEvent updates event information
+func (s *EventService) UpdateEvent(id int, updated models.Event) error {
+	// Get existing event
+	existing, err := s.repo.FindByID(id)
 	if err != nil {
 		return err
 	}
 
-	// Check if the organizer exists and has organizer role
-	var role string
-	err = db.DB.QueryRow(`SELECT role FROM user WHERE id_user = ?`, event.OrganizerID).Scan(&role)
+	// Check if organizer exists and has organizer role
+	role, err := s.repo.GetOrganizerRole(existing.OrganizerID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return errors.New("organizer not found")
-		}
 		return err
 	}
 
-	if role != "organizer" {
-		return errors.New("only users with organizer role can update events")
+	if err := s.validator.ValidateOrganizerRole(role); err != nil {
+		return err
 	}
 
-	// Update fields
-	event.Title = updated.Title
-	event.Location = updated.Location
-	event.Price = updated.Price
-	event.Date = updated.Date
+	// Validate update data
+	if err := s.validator.ValidateUpdate(&updated, &existing); err != nil {
+		return err
+	}
 
-	// Only update capacity if provided and valid
+	// Preserve existing organizer_id
+	updated.OrganizerID = existing.OrganizerID
+
+	// Handle capacity update
 	if updated.Capacity > 0 {
-		// Calculate the difference to adjust available seats proportionally
-		bookedSeats := event.Capacity - event.AvailableSeat
-		if updated.Capacity < bookedSeats {
-			return errors.New("cannot reduce capacity below already booked seats")
+		bookedSeats := existing.Capacity - existing.AvailableSeat
+		
+		if err := s.validator.ValidateCapacityUpdate(updated.Capacity, bookedSeats); err != nil {
+			return err
 		}
-		event.Capacity = updated.Capacity
-		event.AvailableSeat = updated.Capacity - bookedSeats
+
+		updated.AvailableSeat = updated.Capacity - bookedSeats
+	} else {
+		// Keep existing capacity and available seats
+		updated.Capacity = existing.Capacity
+		updated.AvailableSeat = existing.AvailableSeat
 	}
 
-	// Update status if provided
+	// Handle status update
 	if updated.Status != "" {
-		if updated.Status != "available" && updated.Status != "unavailable" {
-			return errors.New("invalid status: must be 'available' or 'unavailable'")
+		if err := s.validator.ValidateStatus(updated.Status); err != nil {
+			return err
 		}
-		event.Status = updated.Status
+	} else {
+		updated.Status = existing.Status
 	}
 
 	// Auto-set status based on available seats
-	if event.AvailableSeat == 0 {
-		event.Status = "unavailable"
+	if updated.AvailableSeat == 0 {
+		updated.Status = "unavailable"
 	}
 
-	query := `UPDATE event SET title=?, location=?, capacity=?, available_seat=?, price=?, status=?, date=? WHERE id_event=?`
-	_, err = db.DB.Exec(query, event.Title, event.Location, event.Capacity, event.AvailableSeat, event.Price, event.Status, event.Date, id)
-	if err != nil {
-		return err
+	// Keep existing date if not provided
+	if updated.Date.IsZero() {
+		updated.Date = existing.Date
 	}
 
-	return nil
+	// Update in database
+	return s.repo.Update(id, &updated)
 }
 
-// DeleteEvent
-func DeleteEvent(id int) error {
-	event, err := GetEventByID(id)
+// DeleteEvent deletes an event
+func (s *EventService) DeleteEvent(id int) error {
+	// Get existing event
+	existing, err := s.repo.FindByID(id)
 	if err != nil {
 		return err
 	}
 
-	// Check if the organizer exists and has organizer role
-	var role string
-	err = db.DB.QueryRow(`SELECT role FROM user WHERE id_user = ?`, event.OrganizerID).Scan(&role)
+	// Check if organizer exists and has organizer role
+	role, err := s.repo.GetOrganizerRole(existing.OrganizerID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return errors.New("organizer not found")
-		}
 		return err
 	}
 
-	if role != "organizer" {
-		return errors.New("only users with organizer role can delete events")
+	if err := s.validator.ValidateOrganizerRole(role); err != nil {
+		return err
 	}
 
-	// Check if there are any bookings for this event
-	var bookingCount int
-	err = db.DB.QueryRow(`SELECT COUNT(*) FROM booking WHERE event_id = ? AND status = 'success'`, id).Scan(&bookingCount)
+	// Check if there are any successful bookings
+	bookingCount, err := s.repo.CountSuccessfulBookings(id)
 	if err != nil {
 		return err
 	}
@@ -168,11 +144,6 @@ func DeleteEvent(id int) error {
 		return errors.New("cannot delete event with existing bookings")
 	}
 
-	query := `DELETE FROM event WHERE id_event=?`
-	_, err = db.DB.Exec(query, id)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// Delete event
+	return s.repo.Delete(id)
 }
