@@ -52,13 +52,13 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 
 // GetAllBookings retrieves all bookings
 func (h *BookingHandler) GetAllBookings(w http.ResponseWriter, r *http.Request) {
-	booking, err := h.service.GetAllBookings()
+	bookings, err := h.service.GetAllBookings()
 	if err != nil {
 		utils.WriteErrorJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	utils.WriteSuccessJSON(w, http.StatusOK, "bookings retrieved successfully", booking)
+	utils.WriteSuccessJSON(w, http.StatusOK, "bookings retrieved successfully", bookings)
 }
 
 // GetBooking retrieves booking details with tickets
