@@ -43,6 +43,7 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		"email":      user.Email,
 		"role":       user.Role,
 		"created_at": user.CreatedAt,
+		"updated_at": user.UpdatedAt,
 	}
 
 	utils.WriteSuccessJSON(w, http.StatusCreated, "user registered successfully", response)
@@ -57,7 +58,7 @@ func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Format response without passwords
-	var usersResponse []map[string]interface{}
+	var usersResponse []map[string]any
 	for _, user := range users {
 		usersResponse = append(usersResponse, map[string]interface{}{
 			"id":         user.ID,
@@ -65,6 +66,7 @@ func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 			"email":      user.Email,
 			"role":       user.Role,
 			"created_at": user.CreatedAt,
+			"updated_at": user.UpdatedAt,
 		})
 	}
 
@@ -88,12 +90,13 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Don't return password
-	response := map[string]interface{}{
+	response := map[string]any{
 		"id":         user.ID,
 		"name":       user.Name,
 		"email":      user.Email,
 		"role":       user.Role,
 		"created_at": user.CreatedAt,
+		"updated_at": user.UpdatedAt,
 	}
 
 	utils.WriteSuccessJSON(w, http.StatusOK, "user retrieved successfully", response)
@@ -125,12 +128,13 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Get updated user data
 	user, _ := h.service.GetUserByID(id)
-	response := map[string]interface{}{
+	response := map[string]any{
 		"id":         user.ID,
 		"name":       user.Name,
 		"email":      user.Email,
 		"role":       user.Role,
 		"created_at": user.CreatedAt,
+		"updated_at": user.UpdatedAt,
 	}
 
 	utils.WriteSuccessJSON(w, http.StatusOK, "user updated successfully", response)

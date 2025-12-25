@@ -9,7 +9,8 @@ func CreateUserTable() error {
 		password VARCHAR(255) NOT NULL,
 		email VARCHAR(100) UNIQUE NOT NULL,
 		role ENUM('customer','organizer') NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 	);`
 	_, err := db.DB.Exec(query)
 	return err

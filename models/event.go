@@ -12,4 +12,6 @@ type Event struct {
 	Price         int       `json:"price" db:"price"`
 	Status        string    `json:"status" db:"status"` // available / unavailable
 	Date          time.Time `json:"date" db:"date"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }

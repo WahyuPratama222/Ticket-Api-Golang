@@ -9,4 +9,5 @@ type User struct {
 	Email     string    `json:"email" db:"email"`
 	Role      string    `json:"role" db:"role"` // customer / organizer
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }

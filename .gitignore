@@ -17,6 +17,7 @@ Thumbs.db
 
 # Environment files
 .env
+github.txt
 
 # Test binary
 *.test

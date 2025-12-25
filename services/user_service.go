@@ -38,6 +38,7 @@ func (s *UserService) CreateUser(user *models.User) error {
 	}
 	user.Password = string(hashedPassword)
 	user.CreatedAt = time.Now()
+	user.UpdatedAt = time.Now()
 
 	// Save to database
 	return s.repo.Create(user)
@@ -85,7 +86,7 @@ func (s *UserService) UpdateUser(id int, updated models.User) error {
 		updated.Password = existingPassword
 	}
 
-	// Update in database
+	// Update in database (updated_at will be set automatically by repository)
 	return s.repo.Update(id, &updated)
 }
 

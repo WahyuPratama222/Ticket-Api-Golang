@@ -27,16 +27,18 @@ func SeedUsers() error {
 			return err
 		}
 
+		now := time.Now()
 		_, err = db.DB.Exec(`
-			INSERT INTO user (name, email, password, role, created_at)
-			VALUES (?, ?, ?, ?, ?)
+			INSERT INTO user (name, email, password, role, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?)
 			ON DUPLICATE KEY UPDATE email=email
 		`,
 			u.Name,
 			u.Email,
 			string(hashed),
 			u.Role,
-			time.Now(),
+			now,
+			now,
 		)
 
 		if err != nil {
