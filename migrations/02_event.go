@@ -13,6 +13,8 @@ func CreateEventTable() error {
 		price INT NOT NULL,
 		status ENUM('available','unavailable') NOT NULL DEFAULT 'available',
 		date DATETIME NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		FOREIGN KEY (organizer_id) REFERENCES user(id_user)
 	);`
 	_, err := db.DB.Exec(query)

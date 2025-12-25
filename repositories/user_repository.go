@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/pkg/db"
@@ -19,8 +20,8 @@ func NewUserRepository() *UserRepository {
 
 // Create inserts a new user into database
 func (r *UserRepository) Create(user *models.User) error {
-	query := `INSERT INTO user (name, password, email, role, created_at) VALUES (?, ?, ?, ?, ?)`
-	result, err := db.DB.Exec(query, user.Name, user.Password, user.Email, user.Role, user.CreatedAt)
+	query := `INSERT INTO user (name, password, email, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
+	result, err := db.DB.Exec(query, user.Name, user.Password, user.Email, user.Role, user.CreatedAt, user.UpdatedAt)
 	if err != nil {
 		if driverErr, ok := err.(*mysql.MySQLError); ok && driverErr.Number == 1062 {
 			return errors.New("email already exists")
@@ -39,7 +40,7 @@ func (r *UserRepository) Create(user *models.User) error {
 
 // FindAll retrieves all users
 func (r *UserRepository) FindAll() ([]models.User, error) {
-	query := `SELECT id_user, name, email, role, created_at FROM user ORDER BY id_user ASC`
+	query := `SELECT id_user, name, email, role, created_at, updated_at FROM user ORDER BY id_user ASC`
 	rows, err := db.DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -49,7 +50,7 @@ func (r *UserRepository) FindAll() ([]models.User, error) {
 	users := []models.User{}
 	for rows.Next() {
 		var user models.User
-		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.CreatedAt)
+		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -62,9 +63,9 @@ func (r *UserRepository) FindAll() ([]models.User, error) {
 // FindByID retrieves a user by ID
 func (r *UserRepository) FindByID(id int) (models.User, error) {
 	var user models.User
-	query := `SELECT id_user, name, email, role, created_at FROM user WHERE id_user = ?`
+	query := `SELECT id_user, name, email, role, created_at, updated_at FROM user WHERE id_user = ?`
 	row := db.DB.QueryRow(query, id)
-	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, errors.New("user not found")
@@ -86,8 +87,8 @@ func (r *UserRepository) GetPasswordByID(id int) (string, error) {
 
 // Update updates user information
 func (r *UserRepository) Update(id int, user *models.User) error {
-	query := `UPDATE user SET name = ?, email = ?, password = ? WHERE id_user = ?`
-	_, err := db.DB.Exec(query, user.Name, user.Email, user.Password, id)
+	query := `UPDATE user SET name = ?, email = ?, password = ?, updated_at = ? WHERE id_user = ?`
+	_, err := db.DB.Exec(query, user.Name, user.Email, user.Password, time.Now(), id)
 	if err != nil {
 		if driverErr, ok := err.(*mysql.MySQLError); ok && driverErr.Number == 1062 {
 			return errors.New("email already exists")

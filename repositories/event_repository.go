@@ -20,8 +20,8 @@ func NewEventRepository() *EventRepository {
 func (r *EventRepository) Create(event *models.Event) error {
 	query := `INSERT INTO event (organizer_id, title, location, capacity, available_seat, price, status, date) 
 	          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-	
-	result, err := db.DB.Exec(query, event.OrganizerID, event.Title, event.Location, 
+
+	result, err := db.DB.Exec(query, event.OrganizerID, event.Title, event.Location,
 		event.Capacity, event.AvailableSeat, event.Price, event.Status, event.Date)
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func (r *EventRepository) Create(event *models.Event) error {
 func (r *EventRepository) FindAll() ([]models.Event, error) {
 	query := `SELECT id_event, organizer_id, title, location, capacity, available_seat, price, status, date 
 	          FROM event ORDER BY id_event ASC`
-	
+
 	rows, err := db.DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (r *EventRepository) FindAll() ([]models.Event, error) {
 	events := []models.Event{}
 	for rows.Next() {
 		var event models.Event
-		err := rows.Scan(&event.ID, &event.OrganizerID, &event.Title, &event.Location, 
+		err := rows.Scan(&event.ID, &event.OrganizerID, &event.Title, &event.Location,
 			&event.Capacity, &event.AvailableSeat, &event.Price, &event.Status, &event.Date)
 		if err != nil {
 			return nil, err
@@ -66,11 +66,11 @@ func (r *EventRepository) FindByID(id int) (models.Event, error) {
 	var event models.Event
 	query := `SELECT id_event, organizer_id, title, location, capacity, available_seat, price, status, date 
 	          FROM event WHERE id_event = ?`
-	
+
 	row := db.DB.QueryRow(query, id)
-	err := row.Scan(&event.ID, &event.OrganizerID, &event.Title, &event.Location, 
+	err := row.Scan(&event.ID, &event.OrganizerID, &event.Title, &event.Location,
 		&event.Capacity, &event.AvailableSeat, &event.Price, &event.Status, &event.Date)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return event, errors.New("event not found")
@@ -84,10 +84,10 @@ func (r *EventRepository) FindByID(id int) (models.Event, error) {
 func (r *EventRepository) Update(id int, event *models.Event) error {
 	query := `UPDATE event SET title=?, location=?, capacity=?, available_seat=?, price=?, status=?, date=? 
 	          WHERE id_event=?`
-	
-	_, err := db.DB.Exec(query, event.Title, event.Location, event.Capacity, 
+
+	_, err := db.DB.Exec(query, event.Title, event.Location, event.Capacity,
 		event.AvailableSeat, event.Price, event.Status, event.Date, id)
-	
+
 	return err
 }
 

@@ -36,6 +36,6 @@ func SetupRoutes() *mux.Router {
 	// Ticket routes
 	r.HandleFunc("/tickets", ticketHandler.GetAllTickets).Methods("GET")
 	r.HandleFunc("/tickets/{id}", ticketHandler.GetTicket).Methods("GET")
-
+	r.HandleFunc("/tickets/{id}/use", ticketHandler.UseTicket).Methods("PUT")
 	return r
 }

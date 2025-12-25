@@ -26,17 +26,17 @@ func (r *BookingRepository) BeginTransaction() (*sql.Tx, error) {
 func (r *BookingRepository) GetEventWithLock(tx *sql.Tx, eventID int) (models.Event, error) {
 	var event models.Event
 	query := `SELECT id_event, available_seat, price, status FROM event WHERE id_event=? FOR UPDATE`
-	
+
 	row := tx.QueryRow(query, eventID)
 	err := row.Scan(&event.ID, &event.AvailableSeat, &event.Price, &event.Status)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return event, errors.New("event not found")
 		}
 		return event, err
 	}
-	
+
 	return event, nil
 }
 
@@ -51,17 +51,17 @@ func (r *BookingRepository) UpdateEventSeats(tx *sql.Tx, eventID int, newAvailab
 func (r *BookingRepository) CreateBooking(tx *sql.Tx, booking *models.Booking) error {
 	query := `INSERT INTO booking (customer_id, event_id, quantity, total_price, status, created_at, updated_at) 
 	          VALUES (?, ?, ?, ?, ?, ?, ?)`
-	
-	result, err := tx.Exec(query, 
-		booking.CustomerID, 
-		booking.EventID, 
-		booking.Quantity, 
-		booking.TotalPrice, 
+
+	result, err := tx.Exec(query,
+		booking.CustomerID,
+		booking.EventID,
+		booking.Quantity,
+		booking.TotalPrice,
 		booking.Status,
 		booking.CreatedAt,
 		booking.UpdatedAt,
 	)
-	
+
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (r *BookingRepository) UpdateBookingStatus(tx *sql.Tx, bookingID int, statu
 func (r *BookingRepository) CreateTicket(tx *sql.Tx, ticket *models.Ticket) error {
 	query := `INSERT INTO ticket (booking_id, holder_name, ticket_code, status, created_at, updated_at) 
 	          VALUES (?, ?, ?, ?, ?, ?)`
-	
+
 	_, err := tx.Exec(query,
 		ticket.BookingID,
 		ticket.HolderName,
@@ -95,7 +95,7 @@ func (r *BookingRepository) CreateTicket(tx *sql.Tx, ticket *models.Ticket) erro
 		ticket.CreatedAt,
 		ticket.UpdatedAt,
 	)
-	
+
 	return err
 }
 
@@ -103,7 +103,7 @@ func (r *BookingRepository) CreateTicket(tx *sql.Tx, ticket *models.Ticket) erro
 func (r *BookingRepository) FindAll() ([]models.Booking, error) {
 	query := `SELECT id_booking, customer_id, event_id, quantity, total_price, status, created_at, updated_at 
 	          FROM booking ORDER BY id_booking ASC`
-	
+
 	rows, err := db.DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -114,13 +114,13 @@ func (r *BookingRepository) FindAll() ([]models.Booking, error) {
 	for rows.Next() {
 		var booking models.Booking
 		err := rows.Scan(
-			&booking.ID, 
-			&booking.CustomerID, 
-			&booking.EventID, 
-			&booking.Quantity, 
+			&booking.ID,
+			&booking.CustomerID,
+			&booking.EventID,
+			&booking.Quantity,
 			&booking.TotalPrice,
-			&booking.Status, 
-			&booking.CreatedAt, 
+			&booking.Status,
+			&booking.CreatedAt,
 			&booking.UpdatedAt,
 		)
 		if err != nil {
@@ -137,26 +137,26 @@ func (r *BookingRepository) FindByID(id int) (models.Booking, error) {
 	var booking models.Booking
 	query := `SELECT id_booking, customer_id, event_id, quantity, total_price, status, created_at, updated_at 
 	          FROM booking WHERE id_booking=?`
-	
+
 	row := db.DB.QueryRow(query, id)
 	err := row.Scan(
-		&booking.ID, 
-		&booking.CustomerID, 
-		&booking.EventID, 
-		&booking.Quantity, 
+		&booking.ID,
+		&booking.CustomerID,
+		&booking.EventID,
+		&booking.Quantity,
 		&booking.TotalPrice,
-		&booking.Status, 
-		&booking.CreatedAt, 
+		&booking.Status,
+		&booking.CreatedAt,
 		&booking.UpdatedAt,
 	)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return booking, errors.New("booking not found")
 		}
 		return booking, err
 	}
-	
+
 	return booking, nil
 }
 
@@ -164,7 +164,7 @@ func (r *BookingRepository) FindByID(id int) (models.Booking, error) {
 func (r *BookingRepository) FindTicketsByBookingID(bookingID int) ([]models.Ticket, error) {
 	query := `SELECT id_ticket, booking_id, holder_name, ticket_code, status, created_at, updated_at 
 	          FROM ticket WHERE booking_id=?`
-	
+
 	rows, err := db.DB.Query(query, bookingID)
 	if err != nil {
 		return nil, err
@@ -175,12 +175,12 @@ func (r *BookingRepository) FindTicketsByBookingID(bookingID int) ([]models.Tick
 	for rows.Next() {
 		var t models.Ticket
 		err := rows.Scan(
-			&t.ID, 
-			&t.BookingID, 
-			&t.HolderName, 
-			&t.TicketCode, 
-			&t.Status, 
-			&t.CreatedAt, 
+			&t.ID,
+			&t.BookingID,
+			&t.HolderName,
+			&t.TicketCode,
+			&t.Status,
+			&t.CreatedAt,
 			&t.UpdatedAt,
 		)
 		if err != nil {

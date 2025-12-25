@@ -20,10 +20,11 @@ func SeedEvents() error {
 	}
 
 	for _, e := range events {
+		now := time.Now()
 		_, err := db.DB.Exec(`
 			INSERT INTO event 
-			(organizer_id, title, location, capacity, available_seat, price, status, date)
-			VALUES (?, ?, ?, ?, ?, ?, 'available', ?)
+			(organizer_id, title, location, capacity, available_seat, price, status, date, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, 'available', ?, ?, ?)
 			ON DUPLICATE KEY UPDATE title=title
 		`,
 			e.OrganizerID,
@@ -33,6 +34,8 @@ func SeedEvents() error {
 			e.Capacity,
 			e.Price,
 			e.Date,
+			now,
+			now,
 		)
 
 		if err != nil {
