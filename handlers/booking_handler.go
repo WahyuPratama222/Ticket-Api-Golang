@@ -39,6 +39,7 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"message":     "booking created successfully",
 		"booking_id":  booking.ID,
+		"quantity":    booking.Quantity,
 		"status":      booking.Status,
 		"total_price": booking.TotalPrice,
 		"created_at":  booking.CreatedAt,

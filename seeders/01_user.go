@@ -16,9 +16,9 @@ func SeedUsers() error {
 	}
 
 	users := []dummyUser{
-		{"organizer", "organizer@mail.com", "organizer123", "organizer"},
-		{"customer1", "customer1@mail.com", "customer123", "customer"},
-		{"customer2", "customer2@mail.com", "customer123", "customer"},
+		{"Dedi Mulyados", "mulmulmul@mail.com", "mullllya123", "organizer"},
+		{"Pak Jkw", "jwkwkw@mail.com", "jwkwkww123", "customer"},
+		{"Bahlilul", "bahlilu@mail.com", "bahabahha123", "customer"},
 	}
 
 	for _, u := range users {
