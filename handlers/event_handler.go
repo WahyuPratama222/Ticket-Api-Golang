@@ -11,18 +11,25 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// CreateEventHandler buat event baru (hanya organizer)
+// CreateEventHandler buat event baru
 func CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 	var event models.Event
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	userRole := r.Header.Get("Role") 
-
-	if err := services.CreateEvent(event, userRole); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+	if err := services.CreateEvent(&event); err != nil {
+		// Check specific error messages for appropriate status codes
+		if err.Error() == "organizer not found" {
+			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
+			return
+		}
+		if err.Error() == "only users with organizer role can create events" {
+			utils.WriteErrorJSON(w, http.StatusForbidden, err.Error())
+			return
+		}
+		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -35,61 +42,85 @@ func GetEventHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid event id"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid event id")
 		return
 	}
 
 	event, err := services.GetEventByID(id)
 	if err != nil {
-		utils.WriteJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
 		return
 	}
 
 	utils.WriteJSON(w, http.StatusOK, event)
 }
 
-// UpdateEventHandler update event (hanya organizer)
+// UpdateEventHandler update event
 func UpdateEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid event id"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid event id")
 		return
 	}
 
 	var updated models.Event
 	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	userRole := r.Header.Get("Role") // ambil role dari header
-
-	if err := services.UpdateEvent(id, updated, userRole); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+	if err := services.UpdateEvent(id, updated); err != nil {
+		// Check specific error messages for appropriate status codes
+		if err.Error() == "event not found" {
+			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
+			return
+		}
+		if err.Error() == "organizer not found" {
+			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
+			return
+		}
+		if err.Error() == "only users with organizer role can update events" {
+			utils.WriteErrorJSON(w, http.StatusForbidden, err.Error())
+			return
+		}
+		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, updated)
+	// Get updated event
+	event, _ := services.GetEventByID(id)
+	utils.WriteJSON(w, http.StatusOK, event)
 }
 
-// DeleteEventHandler hapus event (hanya organizer)
+// DeleteEventHandler hapus event
 func DeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid event id"})
+		utils.WriteErrorJSON(w, http.StatusBadRequest, "invalid event id")
 		return
 	}
 
-	userRole := r.Header.Get("Role") // ambil role dari header
-
-	if err := services.DeleteEvent(id, userRole); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+	if err := services.DeleteEvent(id); err != nil {
+		// Check specific error messages for appropriate status codes
+		if err.Error() == "event not found" {
+			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
+			return
+		}
+		if err.Error() == "organizer not found" {
+			utils.WriteErrorJSON(w, http.StatusNotFound, err.Error())
+			return
+		}
+		if err.Error() == "only users with organizer role can delete events" {
+			utils.WriteErrorJSON(w, http.StatusForbidden, err.Error())
+			return
+		}
+		utils.WriteErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "event deleted successfully"})
 }
