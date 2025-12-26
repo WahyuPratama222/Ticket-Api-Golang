@@ -3,16 +3,13 @@ package repositories
 import (
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/pkg/db"
 )
 
-// BookingRepository handles database operations for bookings
 type BookingRepository struct{}
 
-// NewBookingRepository creates a new booking repository
 func NewBookingRepository() *BookingRepository {
 	return &BookingRepository{}
 }
@@ -49,8 +46,8 @@ func (r *BookingRepository) UpdateEventSeats(tx *sql.Tx, eventID int, newAvailab
 
 // CreateBooking inserts a new booking into database within transaction
 func (r *BookingRepository) CreateBooking(tx *sql.Tx, booking *models.Booking) error {
-	query := `INSERT INTO booking (customer_id, event_id, quantity, total_price, status, created_at, updated_at) 
-	          VALUES (?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO booking (customer_id, event_id, quantity, total_price, status) 
+	          VALUES (?, ?, ?, ?, ?)`
 
 	result, err := tx.Exec(query,
 		booking.CustomerID,
@@ -58,8 +55,6 @@ func (r *BookingRepository) CreateBooking(tx *sql.Tx, booking *models.Booking) e
 		booking.Quantity,
 		booking.TotalPrice,
 		booking.Status,
-		booking.CreatedAt,
-		booking.UpdatedAt,
 	)
 
 	if err != nil {
@@ -72,31 +67,47 @@ func (r *BookingRepository) CreateBooking(tx *sql.Tx, booking *models.Booking) e
 	}
 	booking.ID = int(id)
 
-	return nil
+	// Fetch created_at & updated_at from database
+	return tx.QueryRow(
+		"SELECT created_at, updated_at FROM booking WHERE id_booking = ?",
+		booking.ID,
+	).Scan(&booking.CreatedAt, &booking.UpdatedAt)
 }
 
 // UpdateBookingStatus updates booking status within transaction
 func (r *BookingRepository) UpdateBookingStatus(tx *sql.Tx, bookingID int, status string) error {
-	query := `UPDATE booking SET status=?, updated_at=? WHERE id_booking=?`
-	_, err := tx.Exec(query, status, time.Now(), bookingID)
+	query := `UPDATE booking SET status=? WHERE id_booking=?`
+	_, err := tx.Exec(query, status, bookingID)
 	return err
 }
 
 // CreateTicket inserts a new ticket into database within transaction
 func (r *BookingRepository) CreateTicket(tx *sql.Tx, ticket *models.Ticket) error {
-	query := `INSERT INTO ticket (booking_id, holder_name, ticket_code, status, created_at, updated_at) 
-	          VALUES (?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO ticket (booking_id, holder_name, ticket_code, status) 
+	          VALUES (?, ?, ?, ?)`
 
-	_, err := tx.Exec(query,
+	result, err := tx.Exec(query,
 		ticket.BookingID,
 		ticket.HolderName,
 		ticket.TicketCode,
 		ticket.Status,
-		ticket.CreatedAt,
-		ticket.UpdatedAt,
 	)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	ticket.ID = int(id)
+
+	// Fetch created_at & updated_at from database
+	return tx.QueryRow(
+		"SELECT created_at, updated_at FROM ticket WHERE id_ticket = ?",
+		ticket.ID,
+	).Scan(&ticket.CreatedAt, &ticket.UpdatedAt)
 }
 
 // FindAll retrieves all bookings

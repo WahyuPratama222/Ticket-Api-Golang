@@ -8,10 +8,8 @@ import (
 	"github.com/WahyuPratama222/Ticket-Api-Golang/pkg/db"
 )
 
-// EventRepository handles database operations for events
 type EventRepository struct{}
 
-// NewEventRepository creates a new event repository
 func NewEventRepository() *EventRepository {
 	return &EventRepository{}
 }
@@ -33,12 +31,16 @@ func (r *EventRepository) Create(event *models.Event) error {
 	}
 	event.ID = int(id)
 
-	return nil
+	// Fetch created_at & updated_at from database
+	return db.DB.QueryRow(
+		"SELECT created_at, updated_at FROM event WHERE id_event = ?",
+		event.ID,
+	).Scan(&event.CreatedAt, &event.UpdatedAt)
 }
 
 // FindAll retrieves all events
 func (r *EventRepository) FindAll() ([]models.Event, error) {
-	query := `SELECT id_event, organizer_id, title, location, capacity, available_seat, price, status, date 
+	query := `SELECT id_event, organizer_id, title, location, capacity, available_seat, price, status, date, created_at, updated_at 
 	          FROM event ORDER BY id_event ASC`
 
 	rows, err := db.DB.Query(query)
@@ -51,7 +53,8 @@ func (r *EventRepository) FindAll() ([]models.Event, error) {
 	for rows.Next() {
 		var event models.Event
 		err := rows.Scan(&event.ID, &event.OrganizerID, &event.Title, &event.Location,
-			&event.Capacity, &event.AvailableSeat, &event.Price, &event.Status, &event.Date)
+			&event.Capacity, &event.AvailableSeat, &event.Price, &event.Status, &event.Date,
+			&event.CreatedAt, &event.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -64,12 +67,13 @@ func (r *EventRepository) FindAll() ([]models.Event, error) {
 // FindByID retrieves an event by ID
 func (r *EventRepository) FindByID(id int) (models.Event, error) {
 	var event models.Event
-	query := `SELECT id_event, organizer_id, title, location, capacity, available_seat, price, status, date 
+	query := `SELECT id_event, organizer_id, title, location, capacity, available_seat, price, status, date, created_at, updated_at 
 	          FROM event WHERE id_event = ?`
 
 	row := db.DB.QueryRow(query, id)
 	err := row.Scan(&event.ID, &event.OrganizerID, &event.Title, &event.Location,
-		&event.Capacity, &event.AvailableSeat, &event.Price, &event.Status, &event.Date)
+		&event.Capacity, &event.AvailableSeat, &event.Price, &event.Status, &event.Date,
+		&event.CreatedAt, &event.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -88,7 +92,15 @@ func (r *EventRepository) Update(id int, event *models.Event) error {
 	_, err := db.DB.Exec(query, event.Title, event.Location, event.Capacity,
 		event.AvailableSeat, event.Price, event.Status, event.Date, id)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Fetch updated_at from database
+	return db.DB.QueryRow(
+		"SELECT created_at, updated_at FROM event WHERE id_event = ?",
+		id,
+	).Scan(&event.CreatedAt, &event.UpdatedAt)
 }
 
 // Delete removes an event from database

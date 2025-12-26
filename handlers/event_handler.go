@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
-	"github.com/WahyuPratama222/Ticket-Api-Golang/services"
+	service "github.com/WahyuPratama222/Ticket-Api-Golang/services"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/utils"
 	"github.com/gorilla/mux"
 )
@@ -55,6 +55,8 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		"price":          event.Price,
 		"status":         event.Status,
 		"date":           event.Date,
+		"created_at":     event.CreatedAt,
+		"updated_at":     event.UpdatedAt,
 	}
 
 	utils.WriteSuccessJSON(w, http.StatusCreated, "event created successfully", response)
