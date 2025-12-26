@@ -3,25 +3,22 @@ package repositories
 import (
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/pkg/db"
 	mysql "github.com/go-sql-driver/mysql"
 )
 
-// UserRepository handles database operations for users
 type UserRepository struct{}
 
-// NewUserRepository creates a new user repository
 func NewUserRepository() *UserRepository {
 	return &UserRepository{}
 }
 
 // Create inserts a new user into database
 func (r *UserRepository) Create(user *models.User) error {
-	query := `INSERT INTO user (name, password, email, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
-	result, err := db.DB.Exec(query, user.Name, user.Password, user.Email, user.Role, user.CreatedAt, user.UpdatedAt)
+	query := `INSERT INTO user (name, password, email, role) VALUES (?, ?, ?, ?)`
+	result, err := db.DB.Exec(query, user.Name, user.Password, user.Email, user.Role)
 	if err != nil {
 		if driverErr, ok := err.(*mysql.MySQLError); ok && driverErr.Number == 1062 {
 			return errors.New("email already exists")
@@ -35,7 +32,11 @@ func (r *UserRepository) Create(user *models.User) error {
 	}
 	user.ID = int(id)
 
-	return nil
+	// Fetch created_at & updated_at from database
+	return db.DB.QueryRow(
+		"SELECT created_at, updated_at FROM user WHERE id_user = ?",
+		user.ID,
+	).Scan(&user.CreatedAt, &user.UpdatedAt)
 }
 
 // FindAll retrieves all users
@@ -87,15 +88,20 @@ func (r *UserRepository) GetPasswordByID(id int) (string, error) {
 
 // Update updates user information
 func (r *UserRepository) Update(id int, user *models.User) error {
-	query := `UPDATE user SET name = ?, email = ?, password = ?, updated_at = ? WHERE id_user = ?`
-	_, err := db.DB.Exec(query, user.Name, user.Email, user.Password, time.Now(), id)
+	query := `UPDATE user SET name = ?, email = ?, password = ? WHERE id_user = ?`
+	_, err := db.DB.Exec(query, user.Name, user.Email, user.Password, id)
 	if err != nil {
 		if driverErr, ok := err.(*mysql.MySQLError); ok && driverErr.Number == 1062 {
 			return errors.New("email already exists")
 		}
 		return err
 	}
-	return nil
+
+	// Fetch updated_at from database
+	return db.DB.QueryRow(
+		"SELECT created_at, updated_at FROM user WHERE id_user = ?",
+		id,
+	).Scan(&user.CreatedAt, &user.UpdatedAt)
 }
 
 // Delete removes a user from database

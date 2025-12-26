@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"time"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/repositories"
@@ -10,13 +9,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// UserService handles user business logic
 type UserService struct {
 	repo      *repositories.UserRepository
 	validator *validations.UserValidator
 }
 
-// NewUserService creates a new user service
 func NewUserService() *UserService {
 	return &UserService{
 		repo:      repositories.NewUserRepository(),
@@ -37,10 +34,8 @@ func (s *UserService) CreateUser(user *models.User) error {
 		return err
 	}
 	user.Password = string(hashedPassword)
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
 
-	// Save to database
+	// Save to database (created_at & updated_at will be set by MySQL)
 	return s.repo.Create(user)
 }
 
@@ -86,7 +81,7 @@ func (s *UserService) UpdateUser(id int, updated models.User) error {
 		updated.Password = existingPassword
 	}
 
-	// Update in database (updated_at will be set automatically by repository)
+	// Update in database (updated_at will be set by MySQL)
 	return s.repo.Update(id, &updated)
 }
 

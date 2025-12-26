@@ -3,7 +3,6 @@ package service
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/repositories"
@@ -11,13 +10,11 @@ import (
 	"github.com/google/uuid"
 )
 
-// BookingService handles booking business logic
 type BookingService struct {
 	repo      *repositories.BookingRepository
 	validator *validations.BookingValidator
 }
 
-// NewBookingService creates a new booking service
 func NewBookingService() *BookingService {
 	return &BookingService{
 		repo:      repositories.NewBookingRepository(),
@@ -82,8 +79,7 @@ func (s *BookingService) CreateBooking(booking *models.Booking) error {
 
 	// Create booking with pending status
 	booking.Status = "pending"
-	booking.CreatedAt = time.Now()
-	booking.UpdatedAt = time.Now()
+	// created_at & updated_at will be set by MySQL
 
 	if err := s.repo.CreateBooking(tx, booking); err != nil {
 		return err
@@ -130,8 +126,7 @@ func (s *BookingService) generateTickets(tx *sql.Tx, booking *models.Booking) er
 			HolderName: holderName,
 			TicketCode: ticketCode,
 			Status:     "unused",
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
+			// created_at & updated_at will be set by MySQL
 		}
 		if err := s.repo.CreateTicket(tx, &ticket); err != nil {
 			return err

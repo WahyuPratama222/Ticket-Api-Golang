@@ -3,16 +3,13 @@ package repositories
 import (
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/pkg/db"
 )
 
-// TicketRepository handles database operations for tickets
 type TicketRepository struct{}
 
-// NewTicketRepository creates a new ticket repository
 func NewTicketRepository() *TicketRepository {
 	return &TicketRepository{}
 }
@@ -78,8 +75,8 @@ func (r *TicketRepository) FindByID(id int) (models.Ticket, error) {
 
 // UpdateStatus updates ticket status to 'used'
 func (r *TicketRepository) UpdateStatus(id int, status string) error {
-	query := `UPDATE ticket SET status = ?, updated_at = ? WHERE id_ticket = ?`
-	result, err := db.DB.Exec(query, status, time.Now(), id)
+	query := `UPDATE ticket SET status = ? WHERE id_ticket = ?`
+	result, err := db.DB.Exec(query, status, id)
 	if err != nil {
 		return err
 	}
