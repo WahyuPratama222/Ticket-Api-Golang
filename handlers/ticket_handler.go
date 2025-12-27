@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"net/http"
@@ -11,13 +11,13 @@ import (
 
 // TicketHandler handles HTTP requests for ticket operations
 type TicketHandler struct {
-	service *service.TicketService
+	service *services.TicketService
 }
 
 // NewTicketHandler creates a new ticket handler
 func NewTicketHandler() *TicketHandler {
 	return &TicketHandler{
-		service: service.NewTicketService(),
+		service: services.NewTicketService(),
 	}
 }
 

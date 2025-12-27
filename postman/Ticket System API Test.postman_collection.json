@@ -4,7 +4,7 @@
 		"name": "Ticket System API Test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "46230472",
-		"_collection_link": "https://wahyupratama-6123039.postman.co/workspace/a6033510-4c75-4bd3-89ce-af9419f3f477/collection/46230472-e454d87a-53df-468d-abe8-efe6b0de1798?action=share&source=collection_link&creator=46230472"
+		"_collection_link": "https://wahyupratama-6123039.postman.co/workspace/Wahyu-Pratama's-Workspace~a6033510-4c75-4bd3-89ce-af9419f3f477/collection/46230472-e454d87a-53df-468d-abe8-efe6b0de1798?action=share&source=collection_link&creator=46230472"
 	},
 	"item": [
 		{
@@ -255,7 +255,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"customer_id\": 4,\r\n    \"event_id\": 1,\r\n    \"quantity\": 3,\r\n    \"holder_names\": [\"Reza\", \"Ruze\", \"Reze\"]\r\n}",
+					"raw": "{\r\n    \"customer_id\": 2,\r\n    \"event_id\": 1,\r\n    \"quantity\": 3,\r\n    \"holder_names\": [\"Reza\", \"Ruze\", \"Reze\"]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
