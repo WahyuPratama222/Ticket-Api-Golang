@@ -16,9 +16,12 @@ func NewUserValidator() *UserValidator {
 }
 
 // ValidateEmail checks if email format is valid
-func (v *UserValidator) ValidateEmail(email string) bool {
+func (v *UserValidator) ValidateEmail(email string) error {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	return emailRegex.MatchString(email)
+	if !emailRegex.MatchString(email) {
+		return errors.New("invalid email format")
+	}
+	return nil
 }
 
 // ValidatePassword checks if password meets minimum requirements
@@ -43,8 +46,8 @@ func (v *UserValidator) ValidateCreate(user *models.User) error {
 		return errors.New("all fields are required")
 	}
 
-	if !v.ValidateEmail(user.Email) {
-		return errors.New("invalid email format")
+	if err := v.ValidateEmail(user.Email); err != nil {
+		return err
 	}
 
 	if err := v.ValidatePassword(user.Password); err != nil {
@@ -67,8 +70,8 @@ func (v *UserValidator) ValidateUpdate(updated *models.User, existing *models.Us
 	if updated.Email == "" {
 		updated.Email = existing.Email
 	} else {
-		if !v.ValidateEmail(updated.Email) {
-			return errors.New("invalid email format")
+		if err := v.ValidateEmail(updated.Email); err != nil {
+			return err
 		}
 	}
 	if updated.Role == "" {

@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"encoding/json"
@@ -13,13 +13,13 @@ import (
 
 // UserHandler handles HTTP requests for user operations
 type UserHandler struct {
-	service *service.UserService
+	service *services.UserService
 }
 
 // NewUserHandler creates a new user handler
 func NewUserHandler() *UserHandler {
 	return &UserHandler{
-		service: service.NewUserService(),
+		service: services.NewUserService(),
 	}
 }
 
@@ -60,7 +60,7 @@ func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	// Format response without passwords
 	var usersResponse []map[string]any
 	for _, user := range users {
-		usersResponse = append(usersResponse, map[string]interface{}{
+		usersResponse = append(usersResponse, map[string]any{
 			"id":         user.ID,
 			"name":       user.Name,
 			"email":      user.Email,

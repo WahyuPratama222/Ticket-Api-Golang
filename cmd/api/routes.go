@@ -9,10 +9,10 @@ func SetupRoutes() *mux.Router {
 	r := mux.NewRouter()
 
 	// Initialize all handlers
-	userHandler := handler.NewUserHandler()
-	eventHandler := handler.NewEventHandler()
-	bookingHandler := handler.NewBookingHandler()
-	ticketHandler := handler.NewTicketHandler()
+	userHandler := handlers.NewUserHandler()
+	eventHandler := handlers.NewEventHandler()
+	bookingHandler := handlers.NewBookingHandler()
+	ticketHandler := handlers.NewTicketHandler()
 
 	// User routes
 	r.HandleFunc("/users/register", userHandler.RegisterUser).Methods("POST")

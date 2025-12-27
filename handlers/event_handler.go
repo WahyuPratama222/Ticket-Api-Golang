@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"encoding/json"
@@ -6,20 +6,20 @@ import (
 	"strconv"
 
 	"github.com/WahyuPratama222/Ticket-Api-Golang/models"
-	service "github.com/WahyuPratama222/Ticket-Api-Golang/services"
+	"github.com/WahyuPratama222/Ticket-Api-Golang/services"
 	"github.com/WahyuPratama222/Ticket-Api-Golang/utils"
 	"github.com/gorilla/mux"
 )
 
 // EventHandler handles HTTP requests for event operations
 type EventHandler struct {
-	service *service.EventService
+	service *services.EventService
 }
 
 // NewEventHandler creates a new event handler
 func NewEventHandler() *EventHandler {
 	return &EventHandler{
-		service: service.NewEventService(),
+		service: services.NewEventService(),
 	}
 }
 
